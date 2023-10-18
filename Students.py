@@ -33,6 +33,7 @@ class Student:
         self.is_dumb_boy = True
         other.cringe_boy = True
 
+print(f'{__name__=}')
 
 student1 = Student('Ушак', 19, 'IT', 13)
 student2 = Student('Женя', 19, 'math', 13)
