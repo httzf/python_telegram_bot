@@ -91,8 +91,8 @@ def do_help(update: Update, context: CallbackContext):
         f'\nВот что я <u>умею:</u>',
         f'/start'
         f'\n/help'
-        f'\n/keyboard - клавиатурка в поле ввода текста'
-        f'\n/inline_keyboard - клавиатурка от бота'
+        f'\n/keyboard - секундомер!'
+        f'\n/inline_keyboard - плейлисты с музычкой!'
         f'\n '
         f'\nУдачного пользования!',
     ]
