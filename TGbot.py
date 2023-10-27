@@ -23,19 +23,24 @@ def main():
     dispatcher: Dispatcher = updater.dispatcher
 
     echo_handler = MessageHandler(Filters.text, do_echo)
-    start_handler = CommandHandler(['start', 'help'], do_start)
+    start_handler = CommandHandler('start', do_start)
+    help_handler = CommandHandler('help', do_help)
     keyboard_handler = CommandHandler('keyboard', do_keyboard)
     inline_keyboard_handler = CommandHandler('inline_keyboard', do_inline_keyboard)
     set_timer_handler = CommandHandler('set', set_timer)
     stop_timer_handler = CommandHandler('stop', stop_timer)
+    start_timer_handler = MessageHandler(Filters.text('Start Timer'), set_timer)
+    timer_stop_handler = MessageHandler(Filters.text('Stop Timer'), stop_timer)
     callback_handler = CallbackQueryHandler(keyboard_react)
 
     dispatcher.add_handler(start_handler)
+    dispatcher.add_handler(help_handler)
     dispatcher.add_handler(keyboard_handler)
     dispatcher.add_handler(inline_keyboard_handler)
     dispatcher.add_handler(callback_handler)
     dispatcher.add_handler(set_timer_handler)
-    dispatcher.add_handler(stop_timer_handler)
+    dispatcher.add_handler(start_timer_handler)
+    dispatcher.add_handler(timer_stop_handler)
     dispatcher.add_handler(echo_handler)
 
     updater.start_polling()
@@ -49,12 +54,13 @@ def do_echo(update: Update, context: CallbackContext):
     text = update.message.text
 
     logger.info(f'{username}{user_id} вызвал функцию "do_echo"')
-    logger.info(f'{username}{user_id} вызвал функцию "start"')
     answer = [
-        f'Твои данные: {username}, {user_id}'
-        f'\nТы написал(а): {text}'
-        f'\nЯ знаю команды:'
-        f'\n/start\n/help\n/keyboard\n'f'/inline_keyboard'
+        f'А чего команду не вызываешь?\n'
+        f'Ну ладно!\n'
+        f'Вот твои данные: {username}, {user_id}',
+        f'\nТы написал(а): \n{text}',
+        f'Вот какие знаю команды!:',
+        f'/start, /help, /keyboard, /inline_keyboard'
     ]
     answer = '\n'.join(answer)
     update.message.reply_text(answer, reply_markup=ReplyKeyboardRemove())
@@ -63,35 +69,48 @@ def do_echo(update: Update, context: CallbackContext):
 def do_start(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     username = update.message.from_user.username
-    text = update.message.text
-
     logger.info(f'{username}{user_id} вызвал функцию')
-    answer = [
-        f'<i>Привет, {user_id}!</i>',
-        f' ',
-        f'Твой юзер: {username}',
-        f'Ты написал(а): {text}\n'
-        f' '
-        f'Вот еще мои команды!:\n'
-        f'/start\n/help\n/keyboard\n/inline_keyboard',
+    text = [
+        f'<i>Привет, {username}!</i>',
+        f'\nЯ обычный бот в телеграме с небольшим спектром возможностей\n'
+        f'Чтобы ознакомиться с моими командами нажмите /help\n'
+        f'\n '
+        f'Удачного пользования!',
     ]
-    answer = '\n'.join(answer)
-    update.message.reply_text(answer, parse_mode=ParseMode.HTML,
-                              disable_web_page_preview=True)
+    text = '\n'.join(text)
+    update.message.reply_text(text, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+
+
+def do_help(update: Update, context: CallbackContext):
+    user_id = update.message.from_user.id
+    username = update.message.from_user.username
+    logger.info(f'{username}{user_id} вызвал функцию')
+    text = [
+        f'<i>Привет, {username}!</i>'
+        f' '
+        f'\nВот что я <u>умею:</u>',
+        f'/start'
+        f'\n/help'
+        f'\n/keyboard - клавиатурка в поле ввода текста'
+        f'\n/inline_keyboard - клавиатурка от бота'
+        f'\n '
+        f'\nУдачного пользования!',
+    ]
+    text = '\n'.join(text)
+    update.message.reply_text(text, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
 
 
 def do_keyboard(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     logger.info(f'{user_id=} вызвал функцию do_keyboard')
     buttons = [
-        ['Раз', 'Два'],
-        ['Три', 'Четыре'],
-        ['Калькулетор']
+        ['Start Timer', 'Stop Timer'],
     ]
     logger.info(f'Созданы кнопочки!{buttons}')
     keyboard = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
     logger.info(f'Создана клава {keyboard}')
-    text = 'Выбери кнопочку!'
+    text = 'Попробуй запустить секундомер!'
+
     update.message.reply_text(
         text,
         reply_markup=keyboard
@@ -103,15 +122,15 @@ def do_inline_keyboard(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     logger.info(f'{user_id=} вызвал функцию do_inline_keyboard')
     buttons = [
-        ['Раз', 'Два'],
-        ['Три', 'Четыре'],
-        ['Пять']
+        [('Плейлист 1', 'https://youtu.be/uTuuz__8gUM?si=a4YM8IC-WM15LO6c'), ('Плейлист 2', 'https://youtu.be/pnP3UQQLiaw?si=M6wRbUkeNbKIb8EL')],
+        [('Плейлист 3', 'https://youtu.be/Ium7_28Hams?si=CZ_lekTRCTfFcJjD'), ('Плейлист 4', 'https://youtu.be/hAK61XcBFGs?si=uxVOIkmKWdygdxN_')],
+        [('Плейлист 5', 'https://youtu.be/grBFMP3HDZA?si=n199vFCF-SwyfGwI')]
     ]
-    keyboard_buttons = [[InlineKeyboardButton(text=text, callback_data=text) for text in row] for row in buttons]
+    keyboard_buttons = [[InlineKeyboardButton(text=text[0], callback_data=text[0], url=text[1]) for text in row] for row in buttons]
     logger.info(f'Созданы кнопочки!{buttons}')
     keyboard = InlineKeyboardMarkup(keyboard_buttons)
     logger.info(f'Создана клава {keyboard}')
-    text = 'Выбери кнопочку!'
+    text = 'Выбери себе плейлист для учебы!!'
     update.message.reply_text(
         text,
         reply_markup=keyboard
@@ -155,7 +174,7 @@ def show_seconds(context: CallbackContext):
     timer = datetime.datetime.now() - context.bot_data['timer']
     timer = timer.seconds
     text = f'прошло {timer} секунд'
-    text += '\nнажмите /stop чтобы остановить таймер'
+    text += '\nнажмите Stop Timer на клавиатурке чтобы остановить таймер'
     if not message_id:
         message = context.bot.send_message(user_id, text)
         context.bot_data['message_id'] = message.message_id
@@ -168,7 +187,7 @@ def stop_timer(update: Update, context: CallbackContext):
     timer = datetime.datetime.now() - context.bot_data['timer']
     context.bot_data['timer_job'].schedule_removal()
     update.message.reply_text(f'Таймер остановлен. Прошло {timer} секунд')
-
+    context.bot_data.clear()
 
 if __name__ == '__main__':
     main()
