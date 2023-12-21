@@ -1,6 +1,6 @@
 from telegram import Update, ParseMode
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove  # Обычная текстовая клавиатура
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup  # Инлайн-клавиатура
 from telegram.ext import Updater, Dispatcher
 from telegram.ext import MessageHandler, CommandHandler, CallbackQueryHandler
 from telegram.ext import CallbackContext
@@ -11,8 +11,9 @@ import datetime
 
 from key import TOKEN
 
+from FSM import register_handler
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format='%(asctime)s | %(levelname)s | %(name)s: %(message)s',
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
@@ -40,7 +41,8 @@ def main():
     dispatcher.add_handler(callback_handler)
     dispatcher.add_handler(set_timer_handler)
     dispatcher.add_handler(start_timer_handler)
-    dispatcher.add_handler(timer_stop_handler)
+    dispatcher.add_handler(stop_timer_handler)
+    dispatcher.add_handler(fsm.register_handler)
     dispatcher.add_handler(echo_handler)
 
     updater.start_polling()
