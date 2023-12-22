@@ -7,11 +7,11 @@ from telegram.ext import CallbackContext
 from telegram.ext import Filters
 
 import logging
-import datetime
+import datetime, timedelta
 
 from key import TOKEN
 
-from FSM import register_handler
+from FSM import register_handler, register, check_register
 logging.basicConfig(
     format='%(asctime)s | %(levelname)s | %(name)s: %(message)s',
     level=logging.INFO
@@ -29,9 +29,11 @@ def main():
     keyboard_handler = CommandHandler('keyboard', do_keyboard)
     inline_keyboard_handler = CommandHandler('inline_keyboard', do_inline_keyboard)
     set_timer_handler = CommandHandler('set', set_timer)
-    stop_timer_handler = CommandHandler('stop', stop_timer)
+    timer_stop_handler = CommandHandler('stop', stop_timer)
+    register_handler = CommandHandler('register', register)
+    check_register_handler = CommandHandler('check_register', check_register)
     start_timer_handler = MessageHandler(Filters.text('Start Timer'), set_timer)
-    timer_stop_handler = MessageHandler(Filters.text('Stop Timer'), stop_timer)
+    stop_timer_handler = MessageHandler(Filters.text('Stop Timer'), stop_timer)
     callback_handler = CallbackQueryHandler(keyboard_react)
 
     dispatcher.add_handler(start_handler)
@@ -41,8 +43,10 @@ def main():
     dispatcher.add_handler(callback_handler)
     dispatcher.add_handler(set_timer_handler)
     dispatcher.add_handler(start_timer_handler)
+    dispatcher.add_handler(timer_stop_handler)
     dispatcher.add_handler(stop_timer_handler)
-    dispatcher.add_handler(fsm.register_handler)
+    dispatcher.add_handler(register_handler)
+    dispatcher.add_handler(check_register_handler)
     dispatcher.add_handler(echo_handler)
 
     updater.start_polling()
@@ -84,8 +88,8 @@ def do_start(update: Update, context: CallbackContext):
 
 
 def do_help(update: Update, context: CallbackContext):
-    user_id = update.message.from_user.id
-    username = update.message.from_user.username
+    user_id = update.effective_user.id
+    username = update.effective_user.username
     logger.info(f'{username}{user_id} вызвал функцию')
     text = [
         f'<i>Привет, {username}!</i>'
@@ -95,11 +99,13 @@ def do_help(update: Update, context: CallbackContext):
         f'\n/help'
         f'\n/keyboard - секундомер!'
         f'\n/inline_keyboard - плейлисты с музычкой!'
+        f'\n/register - зарегистрируйся!'
+        f'\n/check_register - глянь регистрацию!'
         f'\n '
         f'\nУдачного пользования!',
     ]
     text = '\n'.join(text)
-    update.message.reply_text(text, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+    context.bot.send_message(user_id, text, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
 
 
 def do_keyboard(update: Update, context: CallbackContext):
@@ -142,6 +148,9 @@ def do_inline_keyboard(update: Update, context: CallbackContext):
 
 def keyboard_react(update: Update, context: CallbackContext):
     query = update.callback_query
+    if query.data == "Нет":
+        do_help(update, context)
+        return
     user_id = update.effective_user.id
     logger.info(f'{user_id=} вызвал функцию keyboard_react')
     buttons = [
@@ -176,7 +185,7 @@ def show_seconds(context: CallbackContext):
     timer = datetime.datetime.now() - context.bot_data['timer']
     timer = timer.seconds
     text = f'прошло {timer} секунд'
-    text += '\nнажмите Stop Timer на клавиатурке чтобы остановить таймер'
+    text += '\nнажмите /stop на клавиатурке чтобы остановить таймер'
     if not message_id:
         message = context.bot.send_message(user_id, text)
         context.bot_data['message_id'] = message.message_id
@@ -187,8 +196,10 @@ def show_seconds(context: CallbackContext):
 def stop_timer(update: Update, context: CallbackContext):
     logger.info(f'Запущена функция delete_timer')
     timer = datetime.datetime.now() - context.bot_data['timer']
+    timer = timer.seconds
     context.bot_data['timer_job'].schedule_removal()
-    update.message.reply_text(f'Таймер остановлен. Прошло {timer} секунд')
+    update.message.reply_text(f'Таймер остановлен. Прошло {timer} секунд\nВоспользуйся командой /help чтобы '
+                              f'посмотреть и другие!')
     context.bot_data.clear()
 
 if __name__ == '__main__':

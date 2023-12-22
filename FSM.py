@@ -6,12 +6,12 @@ from telegram.ext import CallbackContext
 from telegram.ext import Filters
 
 import logging
-from student import Student
+from human import Human
 from db import write_to_db, find_user_by_id
 
 logger = logging.getLogger(__name__)
 
-WAIT_OK, WAIT_NAME, WAIT_SURNAME, WAIT_BIRTHDAY = range(3)
+WAIT_OK, WAIT_NAME, WAIT_SURNAME, WAIT_BIRTHDAY = range(4)
 
 
 def check_register(update: Update, context: CallbackContext):
@@ -145,6 +145,8 @@ def register(update: Update, context: CallbackContext):
         f'{name=}',
         f'{surname=}',
         f'{birthday=}'
+        f' '
+        f'Можешь использовать и другие функции, нажав /help для выбора'
     ]
     answer = '\n'.join(answer)
     update.message.reply_text(answer)
